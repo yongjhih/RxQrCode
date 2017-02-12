@@ -55,9 +55,13 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
-import rx.Emitter;
-import rx.Observable;
-import rx.schedulers.Schedulers;
+
+import io.reactivex.Flowable;
+import io.reactivex.Observable;
+import io.reactivex.schedulers.Schedulers;
+
+import static io.reactivex.BackpressureStrategy.BUFFER;
+import static io.reactivex.BackpressureStrategy.DROP;
 
 /**
  * Created by Piasy{github.com/Piasy} on 19/10/2016.
@@ -75,9 +79,9 @@ public final class RxQrCode {
         // no instance
     }
 
-    public static Observable<Result> scanFromCamera(@Nullable Bundle savedInstanceState,
-            FragmentManager fragmentManager, @IdRes final int container,
-            CameraCompat.ErrorHandler handler) {
+    public static Flowable<Result> scanFromCamera(@Nullable Bundle savedInstanceState,
+                                                    FragmentManager fragmentManager, @IdRes final int container,
+                                                    CameraCompat.ErrorHandler handler) {
         return create(savedInstanceState, fragmentManager, container, handler)
                 .observeOn(Schedulers.computation())
                 .map(ImageFrame::deepCopy)
@@ -134,8 +138,8 @@ public final class RxQrCode {
      * management.
      */
     @Deprecated
-    public static Observable<Bitmap> generateQrCode(String content, int width, int height) {
-        return Observable.fromEmitter(emitter -> {
+    public static Flowable<Bitmap> generateQrCode(String content, int width, int height) {
+        return Flowable.create(emitter -> {
             MultiFormatWriter writer = new MultiFormatWriter();
             try {
                 BitMatrix bm = writer.encode(content, BarcodeFormat.QR_CODE, QR_CODE_LENGTH,
@@ -149,16 +153,16 @@ public final class RxQrCode {
                     }
                 }
                 emitter.onNext(Bitmap.createScaledBitmap(bitmap, width, height, true));
-                emitter.onCompleted();
+                emitter.onComplete();
             } catch (WriterException e) {
                 emitter.onError(e);
             }
-        }, Emitter.BackpressureMode.BUFFER);
+        }, BUFFER);
     }
 
-    public static Observable<File> generateQrCodeFile(Context context, String content, int width,
+    public static Flowable<File> generateQrCodeFile(Context context, String content, int width,
             int height) {
-        return Observable.fromEmitter(emitter -> {
+        return Flowable.create(emitter -> {
             MultiFormatWriter writer = new MultiFormatWriter();
             Bitmap origin = null;
             Bitmap scaled = null;
@@ -188,7 +192,7 @@ public final class RxQrCode {
                 outputStream.close();
 
                 emitter.onNext(localFile);
-                emitter.onCompleted();
+                emitter.onComplete();
             } catch (WriterException | IOException e) {
                 emitter.onError(e);
             } finally {
@@ -199,13 +203,13 @@ public final class RxQrCode {
                     scaled.recycle();
                 }
             }
-        }, Emitter.BackpressureMode.BUFFER);
+        }, BUFFER);
     }
 
-    private static Observable<ImageFrame> create(@Nullable Bundle savedInstanceState,
+    private static Flowable<ImageFrame> create(@Nullable Bundle savedInstanceState,
             FragmentManager fragmentManager, @IdRes final int container,
             CameraCompat.ErrorHandler handler) {
-        return Observable.fromEmitter(emitter -> {
+        return Flowable.create(emitter -> {
             new CameraCompat.Builder(
                     new CameraCompat.VideoCaptureCallback() {
                         @Override
@@ -220,7 +224,7 @@ public final class RxQrCode {
                     .frontCamera(false)
                     .build()
                     .startPreview(savedInstanceState, fragmentManager, container);
-        }, Emitter.BackpressureMode.DROP);
+        }, DROP);
     }
 
     private static LuminanceSource frame2source(ImageFrame frame) {
@@ -229,19 +233,19 @@ public final class RxQrCode {
                 frame.getHeight(), false);
     }
 
-    private static Observable<Result> resolve(LuminanceSource source, boolean failWhenNotFound) {
+    private static Flowable<Result> resolve(LuminanceSource source, boolean failWhenNotFound) {
         BinaryBitmap bitmap = new BinaryBitmap(new HybridBinarizer(source));
         QRCodeReader reader = new QRCodeReader();
         try {
-            return Observable.just(reader.decode(bitmap, TRY_HARDER));
+            return Flowable.just(reader.decode(bitmap, TRY_HARDER));
         } catch (NotFoundException | ChecksumException | FormatException e) {
             if (failWhenNotFound) {
-                return Observable.error(e);
+                return Flowable.error(e);
             }
         } finally {
             reader.reset();
         }
-        return Observable.empty();
+        return Flowable.empty();
     }
 
     private static int calculateInSampleSize(BitmapFactory.Options options, int reqWidth,
