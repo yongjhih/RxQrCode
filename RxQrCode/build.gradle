@@ -13,6 +13,7 @@ buildscript {
 
 repositories {
     jcenter()
+    maven { url "https://dl.bintray.com/yongjhih/maven/" }
     maven { url "https://jitpack.io" }
     maven { url  "http://dl.bintray.com/piasy/maven" }
 }
@@ -42,7 +43,8 @@ android {
 }
 
 dependencies {
-    compile 'com.github.piasy:CameraCompat:1.3.0'
+    //compile 'com.github.piasy:CameraCompat:1.3.0'
+    compile 'com.github.yongjhih:CameraCompat:1.3.1'
     compile 'com.google.zxing:core:3.3.0'
     compile  'io.reactivex.rxjava2:rxjava:2.0.1'
 }
