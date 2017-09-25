@@ -1,2 +1,2 @@
 include ':RxQrCode'
-include ':app'
+//include ':app'

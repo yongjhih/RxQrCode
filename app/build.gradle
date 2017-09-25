@@ -1,3 +1,25 @@
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:2.2.3'
+
+        classpath 'org.figurate:gradle-keytool-plugin:1.0.0'
+        classpath 'me.tatarka:gradle-retrolambda:3.3.0'
+        classpath 'me.tatarka.retrolambda.projectlombok:lombok.ast:0.2.3.a2'
+
+        classpath 'com.github.dcendents:android-maven-gradle-plugin:1.5'
+    }
+}
+
+repositories {
+    jcenter()
+    maven { url "https://dl.bintray.com/yongjhih/maven/" }
+    maven { url "https://jitpack.io" }
+    maven { url  "http://dl.bintray.com/piasy/maven" }
+}
+
 apply plugin: 'com.android.application'
 apply plugin: 'com.jakewharton.butterknife'
 apply plugin: 'me.tatarka.retrolambda'
